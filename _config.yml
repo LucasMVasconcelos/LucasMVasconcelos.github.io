@@ -125,7 +125,7 @@ author:
       icon: "fab fa-fw fa-github"
       # url: "https://github.com/"
     - label: "Linkedin"
-      icon: "fab fa-fw fa-instagram"
+      icon: "fab fa-fw fa-linkedin"
       url: "https://www.linkedin.com/public-profile/settings?trk=d_flagship3_profile_self_view_public_profile"
 
 # Site Footer
