@@ -2,3 +2,5 @@
 main:
   - title: "Quick-Start Guide"
     url: /about/
+  - title: "Collections"
+    url: /collection-archive/
