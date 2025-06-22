@@ -1,6 +1,8 @@
 # main links
 main:
+  - title: "Home"
+    url: /
   - title: "Quick-Start Guide"
     url: /about/
-  - title: "Master fregree"
+  - title: "Master's Research"
     url: /master/
