@@ -6,3 +6,5 @@ main:
     url: /about/
   - title: "Master's Research"
     url: /master/
+  - title: "Financial AI Agent"
+    url: /projects/financial-agent/

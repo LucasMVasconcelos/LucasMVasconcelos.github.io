@@ -19,19 +19,19 @@ feature_row:
     btn_class: "btn--primary"
     btn_label: "Read more"
   - image_path: /assets/images/mm-responsive-feature.png
+    alt: "financial ai agent"
+    title: "Financial AI Agent"
+    excerpt: "A Telegram-based financial AI agent built with FastAPI, LangChain, and LangGraph."
+    url: "/projects/financial-agent/"
+    btn_class: "btn--primary"
+    btn_label: "Read more"
+  - image_path: /assets/images/mm-free-feature.png
     alt: "about me"
     title: "About Me"
     excerpt: "A bit about who I am and what I'm working on."
     url: "/about/"
     btn_class: "btn--primary"
     btn_label: "Read more"
-  - image_path: /assets/images/mm-free-feature.png
-    alt: "get in touch"
-    title: "Get in Touch"
-    excerpt: "Feel free to reach out by email or check out my work on GitHub."
-    url: "/about/#get-in-touch"
-    btn_class: "btn--primary"
-    btn_label: "Contact"
 ---
 
 {% include feature_row %}
