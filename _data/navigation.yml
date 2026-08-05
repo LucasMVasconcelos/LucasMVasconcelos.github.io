@@ -4,7 +4,7 @@ main:
     url: /
   - title: "About"
     url: /about/
+  - title: "Projects"
+    url: /projects/
   - title: "Master's Research"
     url: /master/
-  - title: "Financial AI Agent"
-    url: /projects/financial-agent/
