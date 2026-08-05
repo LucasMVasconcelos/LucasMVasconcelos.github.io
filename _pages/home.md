@@ -6,33 +6,32 @@ header:
   overlay_color: "#5e616c"
   overlay_image: /assets/images/mm-header-overlay-red-filter.jpg
   actions:
-    - label: "<i class='fas fa-download'></i> Install now"
-      url: "/docs/quick-start-guide/"
+    - label: "<i class='fas fa-graduation-cap'></i> Master's Research"
+      url: "/master/"
 excerpt: >
-  A flexible two-column Jekyll theme. Perfect for building personal sites, blogs, and portfolios.<br />
-  <small><a href="https://github.com/mmistakes/minimal-mistakes/releases/tag/4.24.0">Latest release v4.24.0</a></small>
+  Hi, I'm Lucas de Matos Vasconcelos. This site is dedicated to my personal projects — welcome, and enjoy.
 feature_row:
   - image_path: /assets/images/mm-customizable-feature.png
-    alt: "customizable"
-    title: "Super customizable"
-    excerpt: "Everything from the menus, sidebars, comments, and more can be configured or set with YAML Front Matter."
-    url: "/docs/configuration/"
+    alt: "master's research"
+    title: "Master's Research"
+    excerpt: "NLP and machine learning applied to sentiment analysis in psychotherapy session transcripts."
+    url: "/master/"
     btn_class: "btn--primary"
-    btn_label: "Learn more"
+    btn_label: "Read more"
   - image_path: /assets/images/mm-responsive-feature.png
-    alt: "fully responsive"
-    title: "Responsive layouts"
-    excerpt: "Built with HTML5 + CSS3. All layouts are fully responsive with helpers to augment your content."
-    url: "/docs/layouts/"
+    alt: "about me"
+    title: "About Me"
+    excerpt: "A bit about who I am and what I'm working on."
+    url: "/about/"
     btn_class: "btn--primary"
-    btn_label: "Learn more"
+    btn_label: "Read more"
   - image_path: /assets/images/mm-free-feature.png
-    alt: "100% free"
-    title: "100% free"
-    excerpt: "Free to use however you want under the MIT License. Clone it, fork it, customize it... whatever!"
-    url: "/docs/license/"
+    alt: "get in touch"
+    title: "Get in Touch"
+    excerpt: "Feel free to reach out by email or check out my work on GitHub."
+    url: "/about/#get-in-touch"
     btn_class: "btn--primary"
-    btn_label: "Learn more"      
+    btn_label: "Contact"
 ---
 
 {% include feature_row %}

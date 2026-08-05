@@ -15,12 +15,12 @@
 minimal_mistakes_skin    : "air" # "air", "aqua", "contrast", "dark", "dirt", "neon", "mint", "plum", "sunrise"
 
 # Site Settings
-locale                   : "SP-BR"
-title                    : "Lucas Blog"
+locale                   : "en-US"
+title                    : "Lucas de Matos Vasconcelos"
 title_separator          : "-"
-subtitle                 : # site tagline that appears below site title in masthead
+subtitle                 : "Personal site & research" # site tagline that appears below site title in masthead
 name                     : "Lucas de Matos Vasconcelos"
-description              : "This website it dedicated to my personal projets. So im glad you are here, be welcome and enjoy."
+description              : "This website is dedicated to my personal projects. Welcome, and enjoy."
 url                      : "https://lucasmvasconcelos.github.io"
 baseurl                  : # the subpath of your site, e.g. "/blog"
 repository               : # GitHub username/repo-name e.g. "mmistakes/minimal-mistakes"
@@ -91,7 +91,8 @@ social:
   type                   : # Person or Organization (defaults to Person)
   name                   : # If the user or organization name differs from the site's name
   links: # An array of links to social media profiles
-    - "https://www.linkedin.com/public-profile/settings?trk=d_flagship3_profile_self_view_public_profile"
+    - "https://github.com/LucasMVasconcelos"
+    - "https://www.linkedin.com/in/lucas-de-matos-vasconcelos-23259b13a"
 
 # Analytics
 analytics:
@@ -106,27 +107,18 @@ author:
   name             : "Lucas de Matos Vasconcelos"
   avatar           : # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
   bio              : "Always learning"
-  location         : "SP-BR"
+  location         : "São Paulo, Brazil"
   email            : "lucas.matos.vasconcelos@gmail.com"
   links:
     - label: "Email"
       icon: "fas fa-fw fa-envelope-square"
-      # url: "lucas.matos.vasconcelos@gmail.com"
-    - label: "Website"
-      icon: "fas fa-fw fa-link"
-      # url: "https://your-website.com"
-    - label: "Twitter"
-      icon: "fab fa-fw fa-twitter-square"
-      # url: "https://twitter.com/"
-    - label: "Facebook"
-      icon: "fab fa-fw fa-facebook-square"
-      # url: "https://facebook.com/"
+      url: "mailto:lucas.matos.vasconcelos@gmail.com"
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
-      # url: "https://github.com/"
+      url: "https://github.com/LucasMVasconcelos"
     - label: "Linkedin"
       icon: "fab fa-fw fa-linkedin"
-      url: "https://www.linkedin.com/public-profile/settings?trk=d_flagship3_profile_self_view_public_profile"
+      url: "https://www.linkedin.com/in/lucas-de-matos-vasconcelos-23259b13a"
 
 # Site Footer
 footer:

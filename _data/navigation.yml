@@ -2,7 +2,7 @@
 main:
   - title: "Home"
     url: /
-  - title: "Quick-Start Guide"
+  - title: "About"
     url: /about/
   - title: "Master's Research"
     url: /master/

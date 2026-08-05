@@ -1,39 +1,39 @@
 ---
 permalink: /master/
-title: "Master"
-excerpt: "Masterdegree."
+title: "Master's Research"
+excerpt: "Master's degree research on NLP-based sentiment analysis in psychotherapy sessions."
 toc: true
 ---
 
-## 🎓 Projeto de Mestrado
+## 🎓 Master's Research Project
 
-Este projeto de mestrado investiga o uso de técnicas de Processamento de Linguagem Natural (PLN) para análise de sentimentos em transcrições de sessões psicoterapêuticas em português.
+This master's research investigates the use of Natural Language Processing (NLP) techniques for sentiment analysis in transcripts of psychotherapy sessions conducted in Portuguese.
 
-O foco está em compreender **padrões afetivos** ao longo das sessões com o apoio de algoritmos de **aprendizado de máquina** e **modelos de linguagem avançados (LLMs)**.
-
----
-
-## 🎯 Objetivos
-
-- Analisar sentimentos expressos em sessões de psicoterapia com alta granularidade temporal (por turno, fala ou segmento).
-- Comparar abordagens clássicas (como TF-IDF e LSTM) com modelos modernos (como BERT e BODE).
-- Investigar a consistência de análises afetivas em diferentes sessões e pacientes.
-- Propor um pipeline reutilizável para tarefas de análise emocional em contextos clínicos.
+The focus is on understanding **affective patterns** throughout sessions, supported by **machine learning** algorithms and **advanced language models (LLMs)**.
 
 ---
 
-## 🛠 Tecnologias e Métodos Utilizados
+## 🎯 Objectives
 
-- **Pré-processamento textual:** normalização, tokenização, stopwords
-- **Representações textuais:** TF-IDF, embeddings contextuais
-- **Modelos:** LSTM, BERT, BODE, Whisper (para transcrição)
-- **Análise de sentimentos:** Lexicons + Modelos supervisionados
-- **Visualização de dados:** Matplotlib, Seaborn, Sankey
+- Analyze sentiments expressed in psychotherapy sessions with high temporal granularity (by turn, utterance, or segment).
+- Compare classical approaches (such as TF-IDF and LSTM) with modern models (such as BERT and BODE).
+- Investigate the consistency of affective analyses across different sessions and patients.
+- Propose a reusable pipeline for emotional analysis tasks in clinical contexts.
 
 ---
 
-## 📈 Resultados Esperados
+## 🛠 Technologies and Methods Used
 
-- Mapas temporais de sentimentos ao longo das sessões
-- Avaliação de desempenho entre modelos tradicionais e LLMs
-- Propostas para acompanhamento automatizado de progresso terapêutico
+- **Text preprocessing:** normalization, tokenization, stopword removal
+- **Text representations:** TF-IDF, contextual embeddings
+- **Models:** LSTM, BERT, BODE, Whisper (for transcription)
+- **Sentiment analysis:** Lexicons + supervised models
+- **Data visualization:** Matplotlib, Seaborn, Sankey
+
+---
+
+## 📈 Expected Results
+
+- Temporal sentiment maps throughout sessions
+- Performance evaluation comparing traditional models and LLMs
+- Proposals for automated tracking of therapeutic progress

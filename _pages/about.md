@@ -1,19 +1,16 @@
 ---
 permalink: /about/
 title: "About"
-excerpt: "Minimal Mistakes is a flexible two-column Jekyll theme."
-layouts_gallery:
-  - url: /_pages/images/mm-layout-splash.png
-    image_path: /_pages/images/mm-layout-splash.png
-    alt: "splash layout example"
-  - url: /_pages/images/mm-layout-single-meta.png
-    image_path: /_pages/images/mm-layout-single-meta.png
-    alt: "single layout with comments and related posts"
-  - url: /_pages/images/mm-layout-archive.png
-    image_path: /_pages/images/mm-layout-archive.png
-    alt: "archive layout example"
-last_modified_at: 2021-05-11T10:23:16-04:00
-toc: true
+excerpt: "About Lucas de Matos Vasconcelos."
+toc: false
 ---
 
-Minimal Mistakes is a flexible two-column Jekyll theme. Perfect for hosting your personal site, blog, or portfolio on GitHub or self-hosting on your own server. As the name implies --- styling is purposely minimalistic to be enhanced and customized by you :smile:.
+I'm Lucas de Matos Vasconcelos, currently pursuing a Master's degree focused on applying Natural Language Processing and machine learning to sentiment analysis in psychotherapy session transcripts.
+
+I'm always learning, and this site is where I share my personal projects and research.
+
+## Get in touch
+
+- **Email:** [lucas.matos.vasconcelos@gmail.com](mailto:lucas.matos.vasconcelos@gmail.com)
+- **GitHub:** [github.com/LucasMVasconcelos](https://github.com/LucasMVasconcelos)
+- **LinkedIn:** [linkedin.com/in/lucas-de-matos-vasconcelos-23259b13a](https://www.linkedin.com/in/lucas-de-matos-vasconcelos-23259b13a)
