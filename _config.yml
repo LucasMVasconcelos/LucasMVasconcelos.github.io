@@ -199,6 +199,7 @@ kramdown:
   toc_levels: 1..6
   smart_quotes: lsquo,rsquo,ldquo,rdquo
   enable_coderay: false
+  math_engine: mathjax
 
 
 # Sass/SCSS
@@ -219,6 +220,9 @@ collections:
   projects:
     output: true
     permalink: /projects/:path/
+  studies:
+    output: true
+    permalink: /studies/:path/
 
 
 # Plugins (previously gems:)
@@ -292,6 +296,14 @@ defaults:
   - scope:
       path: ""
       type: projects
+    values:
+      layout: single
+      author_profile: true
+      toc: true
+  # _studies
+  - scope:
+      path: ""
+      type: studies
     values:
       layout: single
       author_profile: true
