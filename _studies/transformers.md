@@ -7,11 +7,84 @@ order: 1
 Many of us have heard about the Transformer architecture from the paper ["Attention Is All You Need"](https://arxiv.org/abs/1706.03762) (Vaswani et al., 2017). In this section, I will break it down and explain everything in a very accessible way.
 
 I hope this helps you understand how it is designed and executed!
-# Theory
+# Theory and implementation
 ## Tokenization
-**Word Embeddings** are a widely popular technique for representing a predefined, fixed-size vocabulary of words across documents. Through this approach, it is possible to capture a word's context within a document as well as its semantic and syntactic similarities and relationships with other words. By leveraging vector representations learned directly from text corpora, words with similar meanings tend to yield vectors that lie close to one another in the vector space (Mikolov et al., 2013).
+Tokenization is a fundamental preprocessing step for almost all NLP task.
+Tokenization is the process of splitting text into smaller units called tokens (e.g., words). It is a fundamental preprocessing step for almost all NLP applications: sentiment analysis, question answering, machine translation, information retrieval, etc.
+Modern NLP models like BERT tokenize text into subword unit ["(Devlin et al., 2019)"](https://aclanthology.org/N19-1423/).
 
-The word representation model maps each term to a dense vector within a $W$-dimensional space, capturing its meaning relative to the document's context. Commonly used in recommendation and text classification systems, this approach surpasses traditional **Bag-of-Words (BoW)** models by avoiding sparse vectors and adopting distributed representations, where context-dependent word interdependencies are explicitly preserved.
+
+Think of a corpus as the foundational dataset or "reading material" that an algorithm uses to learn human language.
+The function `build_token_to_id_vocab` creates the vocabulaty of the corpus provided, given the unique id for each word. We give to the funcions the texts and the the functions create a dictionary with the token and the correspondent id.
+The function `build_id_to_token_vocab` does the reverse: it builds a dictionary mapping each id back to its corresponding token — needed later to turn model output (ids) back into readable text.
+
+With both vocabularies in place, `encode_sentence_to_ids` turns a raw sentence into a list of ids: it splits the sentence into tokens (by whitespace) and looks up each one in `token_to_id`. Any token that isn't in the vocabulary — a word the model never saw while the vocabulary was being built — is mapped to the id of a special `<unk>` ("unknown") token instead of raising an error, so encoding never breaks on unseen words.
+
+```python
+import torch
+
+
+def build_token_to_id_vocab(sentences, specials=('<pad>', '<bos>', '<eos>', '<unk>')):
+    # A token-to-id dict with specials first, then corpus tokens in first-seen order.
+    if specials is None:
+        specials = []
+    vocab = {}
+    # Special tokens first
+    for token in specials:
+        if token not in vocab:
+            vocab[token] = len(vocab)
+    # uniq tokens in the corpus
+    for sentence in sentences:
+        for token in sentence.split():
+            if token not in vocab:
+                vocab[token] = len(vocab)
+    return vocab
+
+def build_id_to_token_vocab(token_to_id):
+    id_to_tiken_dict={token_to_id[key]:key for key in token_to_id.keys()}
+    return id_to_tiken_dict
+
+def encode_sentence_to_ids(sentence, token_to_id, unk_token='<unk>'):
+    ids=[]
+    for token in sentence.split():
+        if token not in token_to_id.keys():
+            ids.append(token_to_id[unk_token])
+        else: 
+          ids.append(token_to_id[token])
+    return ids
+```
+`decode_ids_to_tokens` is the inverse operation: given a list of ids and the `id_to_token` mapping, it looks up each id and returns the corresponding tokens. Unlike `encode_sentence_to_ids`, it has no fallback for an id that isn't in the mapping — every id passed in is expected to be a valid key, which normally holds since the ids come from either the vocabulary itself or the model's own output space.
+
+```python
+def decode_ids_to_tokens(ids, id_to_token):
+    tokens=[]
+    for id in ids:
+        tokens.append(id_to_token[id])
+    return tokens
+```
+
+Sentences naturally come in different lengths, but a model expects every sequence in a batch to have the same length. `pad_id_sequence` enforces that: given a list of ids and a target `max_len`, it appends copies of a `pad_id` until the sequence reaches that length, or truncates it down to `max_len` if it's already longer.
+
+```python
+def pad_id_sequence(ids, max_len, pad_id):
+    size=len(ids)
+    if size<max_len:
+        ids=ids+[pad_id]*(max_len-size)
+    else:
+        ids=ids[:max_len]
+    return ids
+```
+
+Once every sequence in a batch has been padded to the same length, `stack_padded_sequences_to_batch` takes that list of equal-length id sequences and stacks them into a single 2D `LongTensor` — one row per sentence, one column per position — the shape PyTorch expects as input to an embedding layer.
+
+```python
+def stack_padded_sequences_to_batch(padded_sequences):
+    """Stack a list of equal-length padded id sequences into a 2D LongTensor batch."""
+    batch_tensor = torch.tensor(padded_sequences, dtype=torch.long)
+    return batch_tensor
+```
+
+Together, these functions form the full pipeline from raw text to model-ready input: build the vocabulary, encode sentences into ids, pad them to a uniform length, and stack them into a batch tensor.
 
 ## Attention
 For each token, self-attention asks: *"which other tokens in this sequence should I pay attention to, and how much?"* It does this by turning every token into three vectors:
