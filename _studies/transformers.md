@@ -89,15 +89,15 @@ Together, these functions form the full pipeline from raw text to model-ready in
 ## Embeddings and positional encoding
 **Word Embedding** is a widely popular technique for representing a predefined, fixed-size vocabulary of words across documents. Through this approach, it is possible to capture a word's context within a document as well as its semantic and syntactic similarities and relationships with other words. By leveraging vector representations learned directly from text corpora, words with similar meanings tend to yield vectors that lie close to one another in the vector space (Mikolov et al., 2013).
 
-The word representation model maps each term to a dense vector within a $W$-dimensional space, capturing its meaning relative to the document's context. Commonly used in recommendation and text classification systems, this approach surpasses traditional **Bag-of-Words (BoW)** models by avoiding sparse vectors and adopting distributed representations, where context-dependent word interdependencies are explicitly preserved.
+The word representation model maps each term to a dense vector within a $$W$$-dimensional space, capturing its meaning relative to the document's context. Commonly used in recommendation and text classification systems, this approach surpasses traditional **Bag-of-Words (BoW)** models by avoiding sparse vectors and adopting distributed representations, where context-dependent word interdependencies are explicitly preserved.
 
 One of the key characteristics of word embeddings is the ability to perform vector operations directly within the word semantic space. This property stems from the way embeddings represent words as continuous vectors, preserving both semantic and syntactic relationships learned during training.
 
-For instance, word embeddings corresponding to analogies or word relationships in the form "word $a$ ($$w_a$$) is to word $$a^*$$ ($$w_a^*$$) as word $b$ ($$w_b$$) is to word $$b^*$$ ($$w_b^*$$)" frequently satisfy:
+For instance, word embeddings corresponding to analogies or word relationships in the form "word *a* ($$w_a$$) is to word $$a^*$$ ($$w_a^*$$) as word $$b$$ ($$w_b$$) is to word *b* ($$w_b^*$$)" frequently satisfy:
 
 $$w_a^* - w_a + w_b \approx w_b^*$$
 
-where $$w_i$$ represents the embedding of word $p_i$. This enables solving analogy tasks—such as *"man is to king as woman is to...?"*—using the following vector operation:
+where $$w_i$$ represents the embedding of word $$p_i$$. This enables solving analogy tasks—such as *"man is to king as woman is to...?"*—using the following vector operation:
 
 $$w_{\text{King}} - w_{\text{Man}} + w_{\text{Woman}}$$
 
@@ -105,11 +105,90 @@ Because the attention mechanism is position-insensitive, it proposed a pre-defin
 
 Position embeddings of two Transformer encoders is defined as
 
-$$ PE_{\text{(i,2j))}} = sin(i/10000^{2j/d_{model}}$$ 
-$$ PE_{\text{(i,2j+1))}} = cos(i/10000^{2j/d_{model}}$$
+$$
+PE_{(i,\ 2j)} = \sin\left(\frac{i}{10000^{2j/d_{model}}}\right), \qquad PE_{(i,\ 2j+1)} = \cos\left(\frac{i}{10000^{2j/d_{model}}}\right)
+$$
 
-where *i*$$* is the position index and *j* is the dimension index.
+where *i* is the position index and *j* is the dimension index.
 
+### Positional encoding, in code
+
+Continuing from the formula above, here's a full implementation, broken into small, single-purpose functions.
+
+Before adding positional information, the raw token embeddings are scaled up:
+
+```python
+def scale_embeddings_by_sqrt_d_model(embeddings, d_model):
+    scale_factor = d_model ** 0.5
+    return embeddings * scale_factor
+```
+
+`scale_embeddings_by_sqrt_d_model` multiplies the embeddings by \(\sqrt{d_{model}}\), as specified in the original paper. Positional encodings are bounded between -1 and 1 (they're built from sine and cosine), while raw embedding values are typically much smaller in magnitude — without this scaling, the positional signal added later would dominate the token's actual identity.
+
+```python
+def compute_positional_div_term(d_model):
+    freq_div = []
+    size = d_model // 2
+    for num in range(size):
+        freq_div.append(1 / (10000**(2 * num / d_model)))
+    return torch.tensor(freq_div, dtype=torch.float32)
+```
+
+`compute_positional_div_term` builds the denominator term from the positional encoding formula, \(10000^{2j/d_{model}}\), for every pair of embedding dimensions. Each of the `d_model // 2` values is a different frequency: low `j` gives a slowly-changing wave, high `j` gives a fast-changing one — together they let the model tell positions apart at both short and long ranges.
+
+```python
+def build_position_index_column(max_len):
+    """Return a (max_len, 1) float tensor of [0, 1, ..., max_len-1]."""
+    positions = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+    return positions
+```
+
+`build_position_index_column` just produces the sequence of position indices \(0, 1, \dots, max\_len-1\), as a column vector. The `.unsqueeze(1)` turns it into a `(max_len, 1)` tensor instead of a flat `(max_len,)` one, so it broadcasts correctly against `div_term`'s `(d_model // 2,)` shape when the two are multiplied together.
+
+```python
+def fill_even_indices_with_sin(pe, position, div_term):
+    angles = position * div_term
+    pe[:, 0::2] = torch.sin(angles)
+    return pe
+
+
+def fill_odd_indices_with_cos(pe, position, div_term):
+    angles = position * div_term
+    pe[:, 1::2] = torch.cos(angles)
+    return pe
+```
+
+These two functions compute `angles = position * div_term` — broadcasting the `(max_len, 1)` position column against the `(d_model // 2,)` frequencies gives a `(max_len, d_model // 2)` matrix of every position-frequency combination. `fill_even_indices_with_sin` writes `sin(angles)` into the even-indexed columns of `pe` (`0, 2, 4, ...`), and `fill_odd_indices_with_cos` writes `cos(angles)` into the odd-indexed ones (`1, 3, 5, ...`) — exactly the alternating sin/cos pattern from the formula.
+
+```python
+def build_sinusoidal_positional_encoding(max_len, d_model):
+    pe = torch.zeros((max_len, d_model))
+    position = build_position_index_column(max_len)
+    div_term = compute_positional_div_term(d_model)
+    pe = fill_odd_indices_with_cos(pe, position, div_term)
+    pe = fill_even_indices_with_sin(pe, position, div_term)
+    return pe
+```
+
+`build_sinusoidal_positional_encoding` ties the previous four functions together: it allocates a `(max_len, d_model)` matrix of zeros, then fills it in with the sin/cos values for every position up to `max_len`. Since the odd and even columns are disjoint, it doesn't matter which of the two fill functions runs first — this is the full positional encoding table, computed once and reused for every sentence.
+
+```python
+def add_positional_encoding_to_embeddings(embedded_batch, positional_encoding):
+    B, L, d_model = embedded_batch.shape
+    pos_enc = positional_encoding[:L].unsqueeze(0).to(embedded_batch.device)
+    add_pos_enc = embedded_batch + pos_enc
+    return add_pos_enc
+```
+
+`add_positional_encoding_to_embeddings` is where the scaled embeddings and the positional encoding table actually meet. Given a batch of embedded sentences (shape `B, L, d_model` — batch size, sequence length, embedding dimension), it slices the precomputed table down to just the first `L` positions, adds a batch dimension with `.unsqueeze(0)` so it broadcasts across every sentence in the batch, and adds it element-wise to the embeddings.
+
+```python
+def build_padding_mask(token_ids, pad_id):
+    mask = token_ids != pad_id
+    return mask.unsqueeze(1).unsqueeze(2)
+```
+
+`build_padding_mask` is unrelated to positional encoding — it solves a different problem. Sentences in a batch are padded to a common length (see `pad_id_sequence` above), but the model shouldn't pay attention to those `<pad>` tokens. This function builds a boolean mask that's `True` wherever a token is real and `False` wherever it's padding, then reshapes it to `(batch, 1, 1, seq_len)` — the shape expected for broadcasting against an attention score matrix of shape `(batch, heads, seq_len, seq_len)`, so every attention head masks out the same padded positions. Note this is a *padding* mask, distinct from the *causal* (look-ahead) mask used in the decoder to block attending to future tokens.
 
 ## Attention
 For each token, self-attention asks: *"which other tokens in this sequence should I pay attention to, and how much?"* It does this by turning every token into three vectors:
@@ -128,10 +207,10 @@ $$
 
 Reading this left to right:
 
-1. $$\frac{QK^\top}$$ — the dot product between every query and every key, producing a matrix of raw similarity scores (how well each token's query matches every other token's key).
-2. $$\(\frac{1}{\sqrt{d_k}}\)$$ — a scaling factor ($$\d_k$$) is the dimension of the key vectors) that keeps those scores from growing too large as \(d_k\) increases, which would otherwise push the softmax into regions with extremely small gradients.
-3. $$\(\text{softmax}(\cdot)\)$$ — turns the scores for each token into a probability distribution over all tokens (they sum to 1): "how much attention to pay to each one."
-4. Multiplying by $$\(V\)$$ — produces a weighted sum of the value vectors, using those attention weights.
+1. \(QK^\top\) — the dot product between every query and every key, producing a matrix of raw similarity scores (how well each token's query matches every other token's key).
+2. \(\frac{1}{\sqrt{d_k}}\) — a scaling factor (\(d_k\) is the dimension of the key vectors) that keeps those scores from growing too large as \(d_k\) increases, which would otherwise push the softmax into regions with extremely small gradients.
+3. \(\text{softmax}(\cdot)\) — turns the scores for each token into a probability distribution over all tokens (they sum to 1): "how much attention to pay to each one."
+4. Multiplying by \(V\) — produces a weighted sum of the value vectors, using those attention weights.
 
 ### Multi-head attention
 
@@ -142,16 +221,6 @@ $$
 $$
 
 The per-head outputs are concatenated and projected back down with \(W^O\) to the model's original dimension.
-
-### Positional encoding
-
-Since self-attention has no built-in notion of order (it treats the sequence as a set), position information is injected by adding a positional encoding vector to each token's embedding. The original paper uses fixed sinusoids of varying frequency:
-
-$$
-PE_{(pos,\ 2i)} = \sin\left(\frac{pos}{10000^{2i/d_{model}}}\right), \qquad PE_{(pos,\ 2i+1)} = \cos\left(\frac{pos}{10000^{2i/d_{model}}}\right)
-$$
-
-where \(pos\) is the token's position in the sequence and \(i\) indexes the embedding dimension — different dimensions oscillate at different frequencies, giving the model a way to infer relative position by the pattern across dimensions.
 
 ### Encoder-decoder architecture
 
