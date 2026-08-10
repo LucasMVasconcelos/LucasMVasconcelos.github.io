@@ -208,7 +208,7 @@ $$
 
 Reading this left to right:
 
-1. $$\frac{QK^\top}$$ — the dot product between every query and every key, producing a matrix of raw similarity scores (how well each token's query matches every other token's key).
+1. $$QK^\top$$ — the dot product between every query and every key, producing a matrix of raw similarity scores (how well each token's query matches every other token's key).
 2. $$\frac{1}{\sqrt{d_k}}$$ — a scaling factor (\(d_k\) is the dimension of the key vectors) that keeps those scores from growing too large as \(d_k\) increases, which would otherwise push the softmax into regions with extremely small gradients.
 3. \(\text{softmax}(\cdot)\) — turns the scores for each token into a probability distribution over all tokens (they sum to 1): "how much attention to pay to each one."
 4. Multiplying by \(V\) — produces a weighted sum of the value vectors, using those attention weights.
