@@ -9,7 +9,9 @@ Many of us have heard about the Transformer architecture from the paper ["Attent
 I hope this helps you understand how it is designed and executed!
 # Theory
 ## Tokenization
+**Word Embeddings** are a widely popular technique for representing a predefined, fixed-size vocabulary of words across documents. Through this approach, it is possible to capture a word's context within a document as well as its semantic and syntactic similarities and relationships with other words. By leveraging vector representations learned directly from text corpora, words with similar meanings tend to yield vectors that lie close to one another in the vector space (Mikolov et al., 2013).
 
+The word representation model maps each term to a dense vector within a $W$-dimensional space, capturing its meaning relative to the document's context. Commonly used in recommendation and text classification systems, this approach surpasses traditional **Bag-of-Words (BoW)** models by avoiding sparse vectors and adopting distributed representations, where context-dependent word interdependencies are explicitly preserved.
 
 ## Attention
 For each token, self-attention asks: *"which other tokens in this sequence should I pay attention to, and how much?"* It does this by turning every token into three vectors:
