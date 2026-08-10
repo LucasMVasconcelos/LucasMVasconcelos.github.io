@@ -86,6 +86,22 @@ def stack_padded_sequences_to_batch(padded_sequences):
 
 Together, these functions form the full pipeline from raw text to model-ready input: build the vocabulary, encode sentences into ids, pad them to a uniform length, and stack them into a batch tensor.
 
+## Embeddings and positional encoding
+**Word Embedding** is a widely popular technique for representing a predefined, fixed-size vocabulary of words across documents. Through this approach, it is possible to capture a word's context within a document as well as its semantic and syntactic similarities and relationships with other words. By leveraging vector representations learned directly from text corpora, words with similar meanings tend to yield vectors that lie close to one another in the vector space (Mikolov et al., 2013).
+
+The word representation model maps each term to a dense vector within a $W$-dimensional space, capturing its meaning relative to the document's context. Commonly used in recommendation and text classification systems, this approach surpasses traditional **Bag-of-Words (BoW)** models by avoiding sparse vectors and adopting distributed representations, where context-dependent word interdependencies are explicitly preserved.
+
+One of the key characteristics of word embeddings is the ability to perform vector operations directly within the word semantic space. This property stems from the way embeddings represent words as continuous vectors, preserving both semantic and syntactic relationships learned during training.
+
+For instance, word embeddings corresponding to analogies or word relationships in the form "word $a$ ($w_a$) is to word $a^*$ ($w_a^*$) as word $b$ ($w_b$) is to word $b^*$ ($w_b^*$)" frequently satisfy:
+
+$$w_a^* - w_a + w_b \approx w_b^*$$
+
+where $w_i$ represents the embedding of word $p_i$. This enables solving analogy tasks—such as *"man is to king as woman is to...?"*—using the following vector operation:
+
+$$w_{\text{King}} - w_{\text{Man}} + w_{\text{Woman}}$$
+
+
 ## Attention
 For each token, self-attention asks: *"which other tokens in this sequence should I pay attention to, and how much?"* It does this by turning every token into three vectors:
 

@@ -13,7 +13,7 @@ The focus is on understanding **affective patterns** throughout sessions, suppor
 
 ---
 
-## 🎯 Objectives
+## Objectives
 
 - Analyze sentiments expressed in psychotherapy sessions with high temporal granularity (by turn, utterance, or segment).
 - Compare classical approaches (such as TF-IDF and LSTM) with modern models (such as BERT and BODE).
@@ -22,7 +22,7 @@ The focus is on understanding **affective patterns** throughout sessions, suppor
 
 ---
 
-## 🛠 Technologies and Methods Used
+## Technologies and Methods Used
 
 - **Text preprocessing:** normalization, tokenization, stopword removal
 - **Text representations:** TF-IDF, contextual embeddings
@@ -32,8 +32,11 @@ The focus is on understanding **affective patterns** throughout sessions, suppor
 
 ---
 
-## 📈 Expected Results
+## Expected Results
 
 - Temporal sentiment maps throughout sessions
 - Performance evaluation comparing traditional models and LLMs
 - Proposals for automated tracking of therapeutic progress
+
+## Link
+[Link dissertation](https://teses.usp.br/teses/disponiveis/100/100131/tde-24062025-193800/en.html)
