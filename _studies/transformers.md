@@ -190,7 +190,8 @@ def build_padding_mask(token_ids, pad_id):
 
 `build_padding_mask` is unrelated to positional encoding — it solves a different problem. Sentences in a batch are padded to a common length (see `pad_id_sequence` above), but the model shouldn't pay attention to those `<pad>` tokens. This function builds a boolean mask that's `True` wherever a token is real and `False` wherever it's padding, then reshapes it to `(batch, 1, 1, seq_len)` — the shape expected for broadcasting against an attention score matrix of shape `(batch, heads, seq_len, seq_len)`, so every attention head masks out the same padded positions. Note this is a *padding* mask, distinct from the *causal* (look-ahead) mask used in the decoder to block attending to future tokens.
 
-## Attention
+## Masks and Scaled Dot-Product Attention
+
 For each token, self-attention asks: *"which other tokens in this sequence should I pay attention to, and how much?"* It does this by turning every token into three vectors:
 
 - **Query (Q)** — what this token is "looking for".
@@ -211,6 +212,22 @@ Reading this left to right:
 2. \(\frac{1}{\sqrt{d_k}}\) — a scaling factor (\(d_k\) is the dimension of the key vectors) that keeps those scores from growing too large as \(d_k\) increases, which would otherwise push the softmax into regions with extremely small gradients.
 3. \(\text{softmax}(\cdot)\) — turns the scores for each token into a probability distribution over all tokens (they sum to 1): "how much attention to pay to each one."
 4. Multiplying by \(V\) — produces a weighted sum of the value vectors, using those attention weights.
+
+```python
+def build_padding_mask(token_ids, pad_id):
+    mask = token_ids != pad_id
+    return mask.unsqueeze(1).unsqueeze(2)
+```
+
+```python
+def build_causal_mask(seq_len):
+    mask = torch.tril(torch.ones((seq_len, seq_len), dtype=torch.bool))
+    return mask.unsqueeze(0).unsqueeze(0)
+```
+
+
+
+
 
 ### Multi-head attention
 
