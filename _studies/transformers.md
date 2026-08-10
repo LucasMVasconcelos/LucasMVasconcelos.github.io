@@ -4,15 +4,14 @@ excerpt: "Self-attention, multi-head attention, and positional encoding — the 
 mathjax: true
 order: 1
 ---
+Many of us have heard about the Transformer architecture from the paper ["Attention Is All You Need"](https://arxiv.org/abs/1706.03762) (Vaswani et al., 2017). In this section, I will break it down and explain everything in a very accessible way.
 
-## 🎯 Why Transformers
+I hope this helps you understand how it is designed and executed!
+# Theory
+## Tokenization
 
-Before Transformers, sequence models (RNNs, LSTMs) processed tokens one at a time, in order — which made them slow to train (no parallelism across the sequence) and prone to losing information over long distances. The Transformer, introduced in ["Attention Is All You Need"](https://arxiv.org/abs/1706.03762) (Vaswani et al., 2017), removes recurrence entirely and replaces it with **self-attention**: every token looks directly at every other token in the sequence, in parallel, regardless of distance.
 
-## 🧠 Theory
-
-### Self-attention, intuitively
-
+## Attention
 For each token, self-attention asks: *"which other tokens in this sequence should I pay attention to, and how much?"* It does this by turning every token into three vectors:
 
 - **Query (Q)** — what this token is "looking for".
@@ -29,10 +28,10 @@ $$
 
 Reading this left to right:
 
-1. \(QK^\top\) — the dot product between every query and every key, producing a matrix of raw similarity scores (how well each token's query matches every other token's key).
-2. \(\frac{1}{\sqrt{d_k}}\) — a scaling factor (\(d_k\) is the dimension of the key vectors) that keeps those scores from growing too large as \(d_k\) increases, which would otherwise push the softmax into regions with extremely small gradients.
-3. \(\text{softmax}(\cdot)\) — turns the scores for each token into a probability distribution over all tokens (they sum to 1): "how much attention to pay to each one."
-4. Multiplying by \(V\) — produces a weighted sum of the value vectors, using those attention weights.
+1. $$\frac{QK^\top}$$ — the dot product between every query and every key, producing a matrix of raw similarity scores (how well each token's query matches every other token's key).
+2. $$\(\frac{1}{\sqrt{d_k}}\)$$ — a scaling factor ($$\d_k$$) is the dimension of the key vectors) that keeps those scores from growing too large as \(d_k\) increases, which would otherwise push the softmax into regions with extremely small gradients.
+3. $$\(\text{softmax}(\cdot)\)$$ — turns the scores for each token into a probability distribution over all tokens (they sum to 1): "how much attention to pay to each one."
+4. Multiplying by $$\(V\)$$ — produces a weighted sum of the value vectors, using those attention weights.
 
 ### Multi-head attention
 
