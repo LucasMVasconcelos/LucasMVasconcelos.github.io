@@ -182,14 +182,6 @@ def add_positional_encoding_to_embeddings(embedded_batch, positional_encoding):
 
 `add_positional_encoding_to_embeddings` is where the scaled embeddings and the positional encoding table actually meet. Given a batch of embedded sentences (shape `B, L, d_model` — batch size, sequence length, embedding dimension), it slices the precomputed table down to just the first `L` positions, adds a batch dimension with `.unsqueeze(0)` so it broadcasts across every sentence in the batch, and adds it element-wise to the embeddings.
 
-```python
-def build_padding_mask(token_ids, pad_id):
-    mask = token_ids != pad_id
-    return mask.unsqueeze(1).unsqueeze(2)
-```
-
-`build_padding_mask` is unrelated to positional encoding — it solves a different problem. Sentences in a batch are padded to a common length (see `pad_id_sequence` above), but the model shouldn't pay attention to those `<pad>` tokens. This function builds a boolean mask that's `True` wherever a token is real and `False` wherever it's padding, then reshapes it to `(batch, 1, 1, seq_len)` — the shape expected for broadcasting against an attention score matrix of shape `(batch, heads, seq_len, seq_len)`, so every attention head masks out the same padded positions. Note this is a *padding* mask, distinct from the *causal* (look-ahead) mask used in the decoder to block attending to future tokens.
-
 ## Masks and Scaled Dot-Product Attention
 
 For each token, self-attention asks: *"which other tokens in this sequence should I pay attention to, and how much?"* It does this by turning every token into three vectors:
@@ -209,9 +201,16 @@ $$
 Reading this left to right:
 
 1. $$QK^\top$$ — the dot product between every query and every key, producing a matrix of raw similarity scores (how well each token's query matches every other token's key).
+
+   ![Dot product example](/assets/images/dot_prod.png)
+
 2. $$\frac{1}{\sqrt{d_k}}$$ — a scaling factor (\(d_k\) is the dimension of the key vectors) that keeps those scores from growing too large as \(d_k\) increases, which would otherwise push the softmax into regions with extremely small gradients.
 3. \(\text{softmax}(\cdot)\) — turns the scores for each token into a probability distribution over all tokens (they sum to 1): "how much attention to pay to each one."
 4. Multiplying by \(V\) — produces a weighted sum of the value vectors, using those attention weights.
+
+### Masking
+
+Before running attention, two independent masks decide which positions are allowed to see which.
 
 ```python
 def build_padding_mask(token_ids, pad_id):
@@ -219,14 +218,83 @@ def build_padding_mask(token_ids, pad_id):
     return mask.unsqueeze(1).unsqueeze(2)
 ```
 
+`build_padding_mask` marks which positions are real tokens versus `<pad>` filler: `True` where `token_ids != pad_id`, `False` on padding. The `unsqueeze(1).unsqueeze(2)` reshapes it from `(batch, seq_len)` to `(batch, 1, 1, seq_len)`, ready to broadcast against an attention score matrix shaped `(batch, heads, seq_len, seq_len)`.
+
 ```python
 def build_causal_mask(seq_len):
     mask = torch.tril(torch.ones((seq_len, seq_len), dtype=torch.bool))
     return mask.unsqueeze(0).unsqueeze(0)
 ```
 
+`build_causal_mask` builds the "no peeking at the future" mask used in the decoder. `torch.tril` keeps only the lower triangle (and diagonal) of a `seq_len x seq_len` matrix of `True`s — so position `i` is only allowed to see positions `0` through `i`, never anything after it. The two `unsqueeze` calls add batch and head dimensions (`(1, 1, seq_len, seq_len)`) so it broadcasts the same way across every sentence and every head.
 
+```python
+def combine_padding_and_causal_masks(padding_mask, causal_mask):
+    return padding_mask & causal_mask
+```
 
+`combine_padding_and_causal_masks` merges both constraints with a boolean AND: a key position is attendable only if it's *both* a real token (not padding) *and* not in the future relative to the query position. This is what a decoder's self-attention actually uses — the encoder, which has no notion of "future," only needs the padding mask on its own.
+
+### Scaled dot-product attention, in code
+
+The formula above, broken into one function per step — and, unlike a bare implementation of the formula, with masking wired all the way through.
+
+```python
+def compute_raw_attention_scores(query, key):
+    scores = query @ key.transpose(-2, -1)
+    return scores
+```
+
+`compute_raw_attention_scores` computes \(QK^\top\): the dot product between every query and every key, giving one raw similarity score per query-key pair.
+
+```python
+def scale_attention_scores(scores, d_k):
+    scores = scores / torch.sqrt(torch.tensor(d_k))
+    return scores
+```
+
+`scale_attention_scores` divides those raw scores by \(\sqrt{d_k}\), the scaling step that keeps them from growing too large as the key dimension increases.
+
+```python
+def mask_attention_scores_with_neg_inf(scores, mask):
+    masked_scores = scores.masked_fill(mask == 0, float('-inf'))
+    return masked_scores
+```
+
+`mask_attention_scores_with_neg_inf` applies a mask (padding, causal, or both combined) by overwriting every disallowed score with \(-\infty\). That specific value matters: after softmax, \(e^{-\infty} = 0\), so masked positions end up with exactly zero attention weight instead of just a small one.
+
+```python
+def softmax_attention_weights(masked_scores):
+    masked_att_matrix = torch.softmax(masked_scores, dim=-1)
+    masked_att_matrix = torch.nan_to_num(masked_att_matrix, nan=0.0)
+    return masked_att_matrix
+```
+
+`softmax_attention_weights` turns the masked scores into a proper probability distribution over keys. The `nan_to_num` call handles an edge case: if a query position has *every* key masked out (e.g., a padding query row), every score in that row is \(-\infty\), and softmax computes \(0/0 = \text{NaN}\) — this replaces those NaNs with 0 so they don't propagate into the rest of the computation.
+
+```python
+def apply_attention_weights_to_values(attention_weights, value):
+    att_wei = attention_weights @ value
+    return att_wei
+```
+
+`apply_attention_weights_to_values` is the final step: multiplying the attention weights by the value vectors produces a weighted sum — for each query, a blend of the value vectors it attended to, in the proportions the softmax decided.
+
+```python
+def scaled_dot_product_attention(query, key, value, mask=None):
+    """Run scaled dot-product attention; return (context, attention_weights)."""
+    d_k = key.shape[-1]
+    scores = query @ key.transpose(-2, -1)
+    scores = scores / torch.sqrt(torch.tensor(d_k))
+    if mask is not None:
+        scores = scores.masked_fill(mask == 0, float("-inf"))
+    scores = torch.softmax(scores, dim=-1)
+    scores = torch.nan_to_num(scores, nan=0.0)
+    att_wei = scores @ value
+    return (att_wei, scores)
+```
+
+`scaled_dot_product_attention` chains all six steps above into a single function: raw scores, scaling, optional masking, softmax with NaN cleanup, and finally the weighted sum over values — returning both the resulting context vectors and the attention weights themselves (useful for later inspecting or visualizing what the model attended to).
 
 
 ### Multi-head attention
