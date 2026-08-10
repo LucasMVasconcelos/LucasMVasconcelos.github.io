@@ -93,13 +93,22 @@ The word representation model maps each term to a dense vector within a $W$-dime
 
 One of the key characteristics of word embeddings is the ability to perform vector operations directly within the word semantic space. This property stems from the way embeddings represent words as continuous vectors, preserving both semantic and syntactic relationships learned during training.
 
-For instance, word embeddings corresponding to analogies or word relationships in the form "word $a$ ($w_a$) is to word $a^*$ ($w_a^*$) as word $b$ ($w_b$) is to word $b^*$ ($w_b^*$)" frequently satisfy:
+For instance, word embeddings corresponding to analogies or word relationships in the form "word $a$ ($$w_a$$) is to word $$a^*$$ ($$w_a^*$$) as word $b$ ($$w_b$$) is to word $$b^*$$ ($$w_b^*$$)" frequently satisfy:
 
 $$w_a^* - w_a + w_b \approx w_b^*$$
 
-where $w_i$ represents the embedding of word $p_i$. This enables solving analogy tasks—such as *"man is to king as woman is to...?"*—using the following vector operation:
+where $$w_i$$ represents the embedding of word $p_i$. This enables solving analogy tasks—such as *"man is to king as woman is to...?"*—using the following vector operation:
 
 $$w_{\text{King}} - w_{\text{Man}} + w_{\text{Woman}}$$
+
+Because the attention mechanism is position-insensitive, it proposed a pre-defined sinusoidal function as positional encoding to give to the embeddings a knowledge of positions of the tokens.
+
+Position embeddings of two Transformer encoders is defined as
+
+$$ PE_{\text{(i,2j))}} = sin(i/10000^{2j/d_{model}}$$ 
+$$ PE_{\text{(i,2j+1))}} = cos(i/10000^{2j/d_{model}}$$
+
+where *i*$$* is the position index and *j* is the dimension index.
 
 
 ## Attention
