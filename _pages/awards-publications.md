@@ -7,15 +7,19 @@ toc: true
 
 Full history also available on [LinkedIn](https://www.linkedin.com/in/lucas-de-matos-vasconcelos-23259b13a).
 
-## 📄 Publications
+## Publications
 
 ### Sentiment Analysis in Psychotherapy in Portuguese Idiom: The Role of Domain-Specific Fine-Tuning
 *ENIAC — July 2026*
+
+[View publication](https://bracis.sbc.org.br/2026/eniac/)
 
 Text analysis has become an important tool in mental healthcare by enabling the automation of clinical tasks. However, the development of Natural Language Processing applications for Brazilian Portuguese remains challenging, as most advanced pre-trained models are primarily designed for English and come from different domains than mental health. This study explores sentiment analysis in psychotherapy session transcripts using traditional NLP techniques and Large Language Models, including the BERTimbau contextual model.
 
 ### RoboFEI@Home 2016 Team Description Paper
 *RoboCup 2016 — Leipzig, Germany — June 2016*
+
+[View publication](https://fei.edu.br/robofei/tdp/RoboFEI_At_Home_TDP_2016.pdf)
 
 Describes the mechanical, electrical, and software modules designed for RoboFEI's robot, Judith, built on the Peoplebot platform to research Human-Robot Interaction (HRI) in social scenarios.
 
@@ -24,15 +28,19 @@ Describes the mechanical, electrical, and software modules designed for RoboFEI'
 
 This work investigated the use of Electrooculography (EOG) to remove ocular artifacts from Electroencephalography (EEG) signals. EEG and EOG data were acquired using the Icelera IBlue 52 device, and artifact removal was performed through Independent Component Analysis (ICA) and Wavelet Transform. The proposed approach successfully eliminated ocular interference while preserving the EEG signal, enabling more accurate analysis.
 
-## 🏆 Awards
+## Awards
 
 ### Quati Award 2026 — Best Master's Dissertation
-*University of São Paulo (USP) — School of Arts, Sciences and Humanities (EACH) — July 2026*
+*University of São Paulo (USP) — School of Arts, Sciences and Humanities (EACH) — July 2026*~
+
+[View award](https://www5.each.usp.br/wp-content/uploads/2026/06/Resultado-final-Quati-2026.pdf)
 
 Awarded for the best master's dissertation in the Exact and Technological Sciences category. The research focused on sentiment analysis in Brazilian Portuguese psychotherapy dialogues using Natural Language Processing, LLMs, and Artificial Intelligence.
 
 ### Hackathon Itaú — 2nd Place
 *Itaú — November 2020*
+
+[View award](https://www.brasilopenbadge.com.br/pages/badge/c2d523e62edb799b473d282f848e2076)
 
 Contributed to developing an automation solution for a Hackathon business case, working proactively with an agile mindset to help drive the area's transformation — the solution was awarded 2nd place by the evaluation committee.
 
@@ -53,5 +61,7 @@ Developed a robot capable of recognizing a user, following a person, recognizing
 
 ### Brazilian and Latin American Robotics Competition — 3rd Place, @Home category
 *November 2015*
+
+[View award](https://utfpr.curitiba.br/larccbr16/?page_id=688)
 
 Developed a home robot capable of detecting faces and objects, following people, recognizing voice commands, and synthesizing speech, using ROS to control the robot and sensors together with OpenCV for computer vision tasks.
