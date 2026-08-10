@@ -123,7 +123,7 @@ def scale_embeddings_by_sqrt_d_model(embeddings, d_model):
     return embeddings * scale_factor
 ```
 
-`scale_embeddings_by_sqrt_d_model` multiplies the embeddings by \(\sqrt{d_{model}}\), as specified in the original paper. Positional encodings are bounded between -1 and 1 (they're built from sine and cosine), while raw embedding values are typically much smaller in magnitude — without this scaling, the positional signal added later would dominate the token's actual identity.
+`scale_embeddings_by_sqrt_d_model` multiplies the embeddings by $$\(\sqrt{d_{model}}\)$$, as specified in the original paper. Positional encodings are bounded between -1 and 1 (they're built from sine and cosine), while raw embedding values are typically much smaller in magnitude — without this scaling, the positional signal added later would dominate the token's actual identity.
 
 ```python
 def compute_positional_div_term(d_model):
@@ -134,7 +134,7 @@ def compute_positional_div_term(d_model):
     return torch.tensor(freq_div, dtype=torch.float32)
 ```
 
-`compute_positional_div_term` builds the denominator term from the positional encoding formula, \(10000^{2j/d_{model}}\), for every pair of embedding dimensions. Each of the `d_model // 2` values is a different frequency: low `j` gives a slowly-changing wave, high `j` gives a fast-changing one — together they let the model tell positions apart at both short and long ranges.
+`compute_positional_div_term` builds the denominator term from the positional encoding formula, $$\(10000^{2j/d_{model}}\)$$, for every pair of embedding dimensions. Each of the `d_model // 2` values is a different frequency: low `j` gives a slowly-changing wave, high `j` gives a fast-changing one — together they let the model tell positions apart at both short and long ranges.
 
 ```python
 def build_position_index_column(max_len):
@@ -143,7 +143,7 @@ def build_position_index_column(max_len):
     return positions
 ```
 
-`build_position_index_column` just produces the sequence of position indices \(0, 1, \dots, max\_len-1\), as a column vector. The `.unsqueeze(1)` turns it into a `(max_len, 1)` tensor instead of a flat `(max_len,)` one, so it broadcasts correctly against `div_term`'s `(d_model // 2,)` shape when the two are multiplied together.
+`build_position_index_column` just produces the sequence of position indices $$\(0, 1, \dots, max\_len-1\)$$, as a column vector. The `.unsqueeze(1)` turns it into a `(max_len, 1)` tensor instead of a flat `(max_len,)` one, so it broadcasts correctly against `div_term`'s `(d_model // 2,)` shape when the two are multiplied together.
 
 ```python
 def fill_even_indices_with_sin(pe, position, div_term):
