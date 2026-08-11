@@ -1,6 +1,6 @@
 ---
 title: "The Transformer Architecture"
-excerpt: "Self-attention, multi-head attention, and positional encoding — the theory behind Transformers, plus a minimal PyTorch implementation."
+excerpt: "Self-attention, multi-head attention, and positional encoding, the theory behind Transformers, plus a minimal PyTorch implementation."
 mathjax: true
 order: 1
 ---
@@ -8,7 +8,7 @@ Many of us have heard about the Transformer architecture from the paper ["Attent
 
 I hope this helps you understand how it is designed and executed!
 
-   ![transformers architecture](/assets/images/transformers_architecture.png)
+![transformers architecture](/assets/images/transformer_arch.png)
 # Theory and implementation
 ## Tokenization
 Tokenization is a fundamental preprocessing step for almost all NLP task.
