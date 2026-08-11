@@ -7,6 +7,8 @@ order: 1
 Many of us have heard about the Transformer architecture from the paper ["Attention Is All You Need"](https://arxiv.org/abs/1706.03762) (Vaswani et al., 2017). In this section, I will break it down and explain everything in a very accessible way.
 
 I hope this helps you understand how it is designed and executed!
+
+   ![transformers architecture](/assets/images/transformers_architecture.png)
 # Theory and implementation
 ## Tokenization
 Tokenization is a fundamental preprocessing step for almost all NLP task.
@@ -123,7 +125,7 @@ def scale_embeddings_by_sqrt_d_model(embeddings, d_model):
     return embeddings * scale_factor
 ```
 
-`scale_embeddings_by_sqrt_d_model` multiplies the embeddings by $$\(\sqrt{d_{model}}\)$$, as specified in the original paper. Positional encodings are bounded between -1 and 1 (they're built from sine and cosine), while raw embedding values are typically much smaller in magnitude — without this scaling, the positional signal added later would dominate the token's actual identity.
+`scale_embeddings_by_sqrt_d_model` multiplies the embeddings by $$\sqrt{d_{model}}$$, as specified in the original paper. Positional encodings are bounded between -1 and 1 (they're built from sine and cosine), while raw embedding values are typically much smaller in magnitude, without this scaling, the positional signal added later would dominate the token's actual identity.
 
 ```python
 def compute_positional_div_term(d_model):
@@ -134,7 +136,7 @@ def compute_positional_div_term(d_model):
     return torch.tensor(freq_div, dtype=torch.float32)
 ```
 
-`compute_positional_div_term` builds the denominator term from the positional encoding formula, $$\(10000^{2j/d_{model}}\)$$, for every pair of embedding dimensions. Each of the `d_model // 2` values is a different frequency: low `j` gives a slowly-changing wave, high `j` gives a fast-changing one — together they let the model tell positions apart at both short and long ranges.
+`compute_positional_div_term` builds the denominator term from the positional encoding formula, $$10000^{2j/d_{model}}$$, for every pair of embedding dimensions. Each of the `d_model // 2` values is a different frequency: low `j` gives a slowly-changing wave, high `j` gives a fast-changing one, which together they let the model tell positions apart at both short and long ranges.
 
 ```python
 def build_position_index_column(max_len):
@@ -143,7 +145,7 @@ def build_position_index_column(max_len):
     return positions
 ```
 
-`build_position_index_column` just produces the sequence of position indices $$\(0, 1, \dots, max\_len-1\)$$, as a column vector. The `.unsqueeze(1)` turns it into a `(max_len, 1)` tensor instead of a flat `(max_len,)` one, so it broadcasts correctly against `div_term`'s `(d_model // 2,)` shape when the two are multiplied together.
+`build_position_index_column` just produces the sequence of position indices $$(0, 1, \dots, max\_len-1)$$, as a column vector. The `.unsqueeze(1)` turns it into a `(max_len, 1)` tensor instead of a flat `(max_len,)` one, so it broadcasts correctly against `div_term`'s `(d_model // 2,)` shape when the two are multiplied together.
 
 ```python
 def fill_even_indices_with_sin(pe, position, div_term):
@@ -158,7 +160,7 @@ def fill_odd_indices_with_cos(pe, position, div_term):
     return pe
 ```
 
-These two functions compute `angles = position * div_term` — broadcasting the `(max_len, 1)` position column against the `(d_model // 2,)` frequencies gives a `(max_len, d_model // 2)` matrix of every position-frequency combination. `fill_even_indices_with_sin` writes `sin(angles)` into the even-indexed columns of `pe` (`0, 2, 4, ...`), and `fill_odd_indices_with_cos` writes `cos(angles)` into the odd-indexed ones (`1, 3, 5, ...`) — exactly the alternating sin/cos pattern from the formula.
+These two functions compute `angles = position * div_term`, broadcasting the `(max_len, 1)` position column against the `(d_model // 2,)` frequencies gives a `(max_len, d_model // 2)` matrix of every position-frequency combination. `fill_even_indices_with_sin` writes `sin(angles)` into the even-indexed columns of `pe` (`0, 2, 4, ...`), and `fill_odd_indices_with_cos` writes `cos(angles)` into the odd-indexed ones (`1, 3, 5, ...`), exactly the alternating sin/cos pattern from the formula.
 
 ```python
 def build_sinusoidal_positional_encoding(max_len, d_model):
@@ -170,7 +172,7 @@ def build_sinusoidal_positional_encoding(max_len, d_model):
     return pe
 ```
 
-`build_sinusoidal_positional_encoding` ties the previous four functions together: it allocates a `(max_len, d_model)` matrix of zeros, then fills it in with the sin/cos values for every position up to `max_len`. Since the odd and even columns are disjoint, it doesn't matter which of the two fill functions runs first — this is the full positional encoding table, computed once and reused for every sentence.
+`build_sinusoidal_positional_encoding` ties the previous four functions together: it allocates a `(max_len, d_model)` matrix of zeros, then fills it in with the sin/cos values for every position up to `max_len`. Since the odd and even columns are disjoint, it doesn't matter which of the two fill functions runs first, this is the full positional encoding table, computed once and reused for every sentence.
 
 ```python
 def add_positional_encoding_to_embeddings(embedded_batch, positional_encoding):
@@ -186,9 +188,9 @@ def add_positional_encoding_to_embeddings(embedded_batch, positional_encoding):
 
 For each token, self-attention asks: *"which other tokens in this sequence should I pay attention to, and how much?"* It does this by turning every token into three vectors:
 
-- **Query (Q)** — what this token is "looking for".
-- **Key (K)** — what this token "offers", to be matched against queries.
-- **Value (V)** — the actual content this token contributes once it's attended to.
+- **Query (Q)**: what this token is "looking for".
+- **Key (K)**: what this token "offers", to be matched against queries.
+- **Value (V)**: the actual content this token contributes once it's attended to.
 
 ### Scaled dot-product attention
 
@@ -198,15 +200,14 @@ $$
 \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right)V
 $$
 
-Reading this left to right:
 
-1. $$QK^\top$$ — the dot product between every query and every key, producing a matrix of raw similarity scores (how well each token's query matches every other token's key).
+1. $$QK^\top$$: the dot product between every query and every key, producing a matrix of raw similarity scores (how well each token's query matches every other token's key).
 
    ![Dot product example](/assets/images/dot_prod.png)
 
-2. $$\frac{1}{\sqrt{d_k}}$$ — a scaling factor (\(d_k\) is the dimension of the key vectors) that keeps those scores from growing too large as \(d_k\) increases, which would otherwise push the softmax into regions with extremely small gradients.
-3. \(\text{softmax}(\cdot)\) — turns the scores for each token into a probability distribution over all tokens (they sum to 1): "how much attention to pay to each one."
-4. Multiplying by \(V\) — produces a weighted sum of the value vectors, using those attention weights.
+2. $$\frac{1}{\sqrt{d_k}}$$: a scaling factor (\(d_k\) is the dimension of the key vectors) that keeps those scores from growing too large as $$d_k$$ increases, which would otherwise push the softmax into regions with extremely small gradients.
+3. $$\text{softmax}$$: turns the scores for each token into a probability distribution over all tokens (they sum to 1): "how much attention to pay to each one."
+4. Multiplying by \(V\): produces a weighted sum of the value vectors, using those attention weights.
 
 ### Masking
 
@@ -299,7 +300,12 @@ def scaled_dot_product_attention(query, key, value, mask=None):
 
 ### Multi-head attention
 
-Instead of computing a single attention function, the Transformer runs several in parallel — "heads" — each with its own learned projections, so different heads can specialize in different kinds of relationships (e.g., syntactic vs. semantic):
+Multi-head attention is the core mechanism behind Transformer models, introduced by Vaswani et al. (2017). Instead of computing a single attention function over the full-dimensional input, it splits the query, key, and value projections into several smaller "heads" that each operate on a different low-dimensional slice of the input, in parallel.
+Using multiple heads lets the model attend to different types of relationships or features simultaneously, for example, one head might capture syntactic structure while another captures long-range dependencies. This generally improves model accuracy compared to single-head attention
+
+How it works
+
+For each head i, the input tokens are projected into query, key, and value matrices using head-specific projection weights. Each head then performs scaled dot-product attention independently
 
 $$
 \text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, \dots, \text{head}_h)W^O, \quad \text{head}_i = \text{Attention}(QW_i^Q,\ KW_i^K,\ VW_i^V)
