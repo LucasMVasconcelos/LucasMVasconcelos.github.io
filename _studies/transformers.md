@@ -113,19 +113,19 @@ PE_{(i,\ 2j)} = \sin\left(\frac{i}{10000^{2j/d_{model}}}\right), \qquad PE_{(i,\
 $$
 
 where *i* is the position index and *j* is the dimension index.
-To understand this better, imagine a matrix with dimensions $(\text{positions}, d_{\text{model}})$. 
+To understand this better, imagine a matrix with dimensions $$(\text{positions}, d_{\text{model}})$$. 
 
-For a given position $i$ (such as position 1), the values across the embedding dimension $j$ are assigned as follows:
-* **Even dimensions ($2j$):** Assigned using the sine function, $\sin(\theta)$.
-* **Odd dimensions ($2j+1$):** Assigned using the cosine function, $\cos(\theta)$.
+For a given position *i* and embedding dimension (such as position 1), the values across the embedding dimension *j* are assigned as follows:
+- Even dimensions (*2j*): Assigned using the sine function, $$\sin(\theta)$$.
+- Odd dimensions (*$2j+1*): Assigned using the cosine function, $$\cos(\theta)$$.
 
-Where the angle/frequency term $\theta$ is defined as:
+Where the angle/frequency term $$\theta$$ is defined as:
 
 $$\theta = \frac{i}{10000^{2j/d_{\text{model}}}}$$
 
-As $j$ increases along the model dimension ($d_{\text{model}}$), the denominator grows exponentially, making the input angle $\theta$ progressively smaller. Consequently, for small angles:
-* The values of the **sine** components trend toward $0$.
-* The values of the **cosine** components trend toward $1$.
+As *j* increases along the model dimension ($$d_{\text{model}}$$), the denominator grows exponentially, making the input angle $$\theta$$ progressively smaller. Consequently, for small angles:
+- The values of the *sine* components trend toward 0.
+- The values of the *cosine* components trend toward 1.
 
 This design allows lower dimensions to capture high-frequency position signals (rapid changes) while higher dimensions capture low-frequency signals (gradual changes across longer contexts).
 
