@@ -333,6 +333,127 @@ $$
 
 The per-head outputs are concatenated and projected back down with \(W^O\) to the model's original dimension.
 
+### Multi-head attention, in code
+
+Splitting into heads is just a reshape, done twice: once to fan a tensor out into heads, once to fold it back.
+
+```python
+def split_last_dim_into_heads(tensor, num_heads):
+    B, L, d_model = tensor.shape
+    head_size = d_model // num_heads
+    split_tensor = tensor.reshape(B, L, num_heads, head_size)
+    return split_tensor
+```
+
+`split_last_dim_into_heads` takes a `(B, L, d_model)` tensor — a batch of sentences, each token already projected to the full model dimension — and reshapes its last axis into `(num_heads, head_size)`, where `head_size = d_model // num_heads`. No data moves or gets duplicated; it's the same numbers, just relabeled into `(B, L, num_heads, head_size)`.
+
+```python
+def transpose_heads_before_sequence(split_tensor):
+    return split_tensor.transpose(1, 2)
+```
+
+`transpose_heads_before_sequence` swaps the `L` and `num_heads` axes, turning `(B, L, num_heads, head_size)` into `(B, num_heads, L, head_size)`. This is the shape `scaled_dot_product_attention` expects: with heads before the sequence dimension, the batched matrix multiplications inside it treat each head exactly like an independent extra batch item, so every head runs its own attention in parallel without any extra code.
+
+```python
+def merge_heads_back_to_model_dim(multi_head_tensor):
+    x = multi_head_tensor.transpose(1, 2)
+    B, L, num_heads, d_k = x.shape
+    out = x.reshape(B, L, num_heads * d_k)
+    return out
+```
+
+`merge_heads_back_to_model_dim` undoes the previous two steps: transpose back to `(B, L, num_heads, d_k)`, then reshape to collapse `num_heads` and `d_k` into a single `d_model`-sized axis. This is the "Concat" from the \(\text{MultiHead}(Q,K,V)\) formula — after every head has attended independently, their outputs are stitched back into one vector per token.
+
+A plain linear layer, and two ways of using it to get Q, K, and V:
+
+```python
+def apply_linear_projection(x, weight, bias):
+    y = x @ weight.T
+    if bias is not None:
+        y = y + bias
+    return y
+```
+
+`apply_linear_projection` is a linear layer written out by hand instead of `nn.Linear`: multiply by the transposed weight matrix, add the bias if there is one. It's the building block every projection in multi-head attention (Q, K, V, and the output projection \(W^O\)) is made of.
+
+```python
+def project_to_query_key_value(x, w_q, b_q, w_k, b_k, w_v, b_v):
+    q = apply_linear_projection(x, w_q, b_q)
+    k = apply_linear_projection(x, w_k, b_k)
+    v = apply_linear_projection(x, w_v, b_v)
+    return q, k, v
+```
+
+`project_to_query_key_value` applies three separate projections to the *same* input `x`, producing its query, key, and value. This is the self-attention case, where a sequence attends to itself. Note that `assemble_multi_head_attention_forward` below doesn't actually call this helper — it projects `query`, `key`, and `value` separately instead, since those can come from three *different* sequences (needed for the decoder's cross-attention over the encoder's output).
+
+```python
+def split_qkv_into_heads(q, k, v, num_heads):
+    q_h = transpose_heads_before_sequence(split_last_dim_into_heads(q, num_heads))  # (B, num_heads, L, d_model // num_heads)
+    k_h = transpose_heads_before_sequence(split_last_dim_into_heads(k, num_heads))
+    v_h = transpose_heads_before_sequence(split_last_dim_into_heads(v, num_heads))
+    return q_h, k_h, v_h
+```
+
+`split_qkv_into_heads` just applies the split-then-transpose pair above to all three of Q, K, and V at once, so all of them end up in the `(B, num_heads, L, d_k)` shape attention needs.
+
+```python
+def multi_head_scaled_dot_product_attention(q_h, k_h, v_h, mask=None):
+    return scaled_dot_product_attention(q_h, k_h, v_h, mask)
+```
+
+`multi_head_scaled_dot_product_attention` doesn't add any new logic — it's a thin, explicitly-named wrapper around the same `scaled_dot_product_attention` from the previous section. The function doesn't need to know about heads at all: once Q, K, and V carry a `num_heads` axis, the exact same matrix multiplications compute every head's attention independently in one batched call.
+
+```python
+def merge_heads_and_project_output(context, w_o, b_o):
+    merged_context = merge_heads_back_to_model_dim(context)
+    output = apply_linear_projection(merged_context, w_o, b_o)
+    return output
+```
+
+`merge_heads_and_project_output` is the last step of the formula: concatenate the heads back together (`merge_heads_back_to_model_dim`), then project the result with \(W^O\) to mix information across heads before it leaves the layer.
+
+```python
+def scaled_dot_product_attention(query, key, value, mask=None):
+    """
+    Executa o Scaled Dot-Product Attention.
+    Retorna a tupla (context, attention_weights).
+    """
+    d_k = key.shape[-1]
+
+    scores = (query @ key.transpose(-2, -1)) / torch.sqrt(torch.tensor(d_k, dtype=query.dtype))
+
+    if mask is not None:
+        scores = scores.masked_fill(~mask, float("-inf"))
+
+    attn_weights = torch.softmax(scores, dim=-1)
+    attn_weights = torch.nan_to_num(attn_weights, nan=0.0)
+
+    context = attn_weights @ value
+    return (context, attn_weights)
+```
+
+This is the same `scaled_dot_product_attention` already built step by step in the previous section — repeated here since multi-head attention calls it directly. One detail changed: this version does `scores.masked_fill(~mask, ...)` instead of `scores.masked_fill(mask == 0, ...)`. Both do the same thing, but this one expects `mask` to already be a boolean tensor (`True` = keep, `False` = block) and negates it with `~`, instead of comparing against `0`.
+
+Finally, the full forward pass:
+
+```python
+def assemble_multi_head_attention_forward(query, key, value, w_q, w_k, w_v, w_o, num_heads, mask=None):
+    q = apply_linear_projection(query, w_q, None)  # (B, L_q, d_model)
+    k = apply_linear_projection(key, w_k, None)    # (B, L_k, d_model)
+    v = apply_linear_projection(value, w_v, None)  # (B, L_v, d_model)
+
+    q_heads, k_heads, v_heads = split_qkv_into_heads(q, k, v, num_heads)
+
+    context, weigts = multi_head_scaled_dot_product_attention(q_heads, k_heads, v_heads, mask)
+
+    # 4. Fusão das Cabeças e Projeção Final de Saída
+    output = merge_heads_and_project_output(context, w_o, None)
+
+    return output
+```
+
+`assemble_multi_head_attention_forward` ties every function above into the complete multi-head attention layer: project `query`, `key`, and `value` (separately, so this also works for cross-attention, not just self-attention), split each into heads, run scaled dot-product attention across all heads at once, then merge the heads back together and project the result through \(W^O\). This is the function an encoder or decoder layer actually calls.
+
 ### Encoder-decoder architecture
 
 The original Transformer stacks two components:
